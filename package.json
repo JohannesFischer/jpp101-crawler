@@ -1,0 +1,16 @@
+{
+  "name": "nut_crawler",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^0.20.0",
+    "htmlparser2": "^3.9.0",
+    "superagent": "^1.7.2"
+  }
+}
