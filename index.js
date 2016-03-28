@@ -35,20 +35,20 @@ prompt.multi([
       loginData[el.name] = el.value;
     });
     
-    console.log('Logging in as ' + input.username);
+    console.log('[LOG]: Logging in as ' + input.username);
 
     crawler.login(loginPage, loginData, response, function() {
       crawler.getPage(lessonPage, function(error, response, body) {
         // put available categories
         var $ = cheerio.load(body);
-        var categories = $('a.ill-level-title');
-        if (categories.length > 0) {
-          console.log('Please select a category:');
-          for (var i = 0; i < categories.length; i++) {
-            console.log(`  [${i + 1}] ${categories[i].children[0].data}`); 
+        var levels = $('a.ill-level-title');
+        if (levels.length > 0) {
+          console.log('Levels available:');
+          for (var i = 0; i < levels.length; i++) {
+            console.log(`  [${i + 1}] ${levels[i].children[0].data}`); 
           }
-          prompt('Put in the category number to continue: ', (input) => {
-            console.log('You picked ' + input);
+          prompt('Select a level: ', (input) => {
+            console.log('[LOG]: You picked ' + input);
           });
         }
       });

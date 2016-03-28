@@ -22,17 +22,24 @@ class Jpcrawler {
         this.getPage(this.host + match[1], function(error, response, body) {
           var uri = response.request.uri.href;
           if (uri === 'http://www.japanesepod101.com/index.php') {
-            console.log('Log in successful!');
+            console.log('[LOG]: Log in successful!');
 
             if (callback !== undefined) {
               callback();
             }
           } else {
-            console.log('Something went wrong. Got redirected to: ' + url);
+            console.log('[ERROR]: Something went wrong. Got redirected to: ' + url);
           }
         });
       } else {
-        console.log('No meta redirect found');
+        if (response.request.uri.href === this.host + '/member/login_new.php') {
+          var errorBox = $('.error_box div');
+          var msg = errorBox[0].children[0].data || '';
+          console.log('[ERROR]: ' + msg.replace('\n', ''));
+        } else {
+          // redirect but not meat redirect found
+          console.log('[EROR]: No meta redirect found');
+        }
       }
     }
   }
