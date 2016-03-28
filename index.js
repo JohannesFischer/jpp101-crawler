@@ -11,17 +11,17 @@ var loginPage = host + '/member/login_new.php';
 var episodeList = host + '/index.php?cat=1';
 var lessonPage = host + '/index.php?cat=Introduction';
 
-// prompt to input username & password
+// Prompt to input username & password
 prompt.multi([
   {
     label: 'Enter your username',
-    key: 'username'
+    key: 'username',
   },
   {
     label: 'Enter your password',
     key: 'password',
-    type: 'password'
-  }
+    type: 'password',
+  },
 ], function(input) {
   crawler.getPage(loginPage, function(error, response, body) {
     var $ = cheerio.load(body);
@@ -29,23 +29,23 @@ prompt.multi([
     $('input[name=amember_pass]').val(input.password);
     var formData = $('form[name=login]').serializeArray();
     formData[3].value = formData[3].value.replace(' ', '+');
-    
+
     var loginData = {};
     formData.forEach(function(el) {
       loginData[el.name] = el.value;
     });
-    
+
     console.log('[LOG]: Logging in as ' + input.username);
 
     crawler.login(loginPage, loginData, response, function() {
       crawler.getPage(lessonPage, function(error, response, body) {
-        // put available categories
+        // Put available categories
         var $ = cheerio.load(body);
         var levels = $('a.ill-level-title');
         if (levels.length > 0) {
           console.log('Levels available:');
           for (var i = 0; i < levels.length; i++) {
-            console.log(`  [${i + 1}] ${levels[i].children[0].data}`); 
+            console.log(`  [${i + 1}] ${levels[i].children[0].data}`);
           }
           prompt('Select a level: ', (input) => {
             console.log('[LOG]: You picked ' + input);
@@ -64,7 +64,7 @@ var getEpisodeLinks = function(linkList, num) {
     var $ = cheerio.load(body);
     var downloadLink = $('a.media-download');
     if (downloadLink !== undefined) {
-      for(var i = 0; i < downloadLink.length; i++) {
+      for (var i = 0; i < downloadLink.length; i++) {
         var attribs = downloadLink[i].attribs;
 
         if (attribs.class.indexOf('locked') === -1) {
@@ -73,7 +73,7 @@ var getEpisodeLinks = function(linkList, num) {
           downloadList.push(target);
         }
       }
-      
+
       if (num < linkList.length) {
         getEpisodeLinks(linkList, num + 1);
       } else {

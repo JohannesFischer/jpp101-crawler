@@ -5,7 +5,7 @@ var request = require('request');
 var cookieJar = request.jar();
 
 class Jpcrawler {
-  
+
   constructor() {
     this.host = 'http://www.japanesepod101.com';
     this.userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) ' +
@@ -17,7 +17,7 @@ class Jpcrawler {
       var $ = cheerio.load(body);
       var regex = /<meta http-equiv="Refresh" CONTENT="1; URL=([^"]+)[^>]+>/;
       var match = regex.exec(response.body);
-      
+
       if (match !== null) {
         this.getPage(this.host + match[1], function(error, response, body) {
           var uri = response.request.uri.href;
@@ -28,7 +28,7 @@ class Jpcrawler {
               callback();
             }
           } else {
-            console.log('[ERROR]: Something went wrong. Got redirected to: ' + url);
+            console.log('[ERROR]: Something went wrong. Redirected to: ' + url);
           }
         });
       } else {
@@ -37,7 +37,7 @@ class Jpcrawler {
           var msg = errorBox[0].children[0].data || '';
           console.log('[ERROR]: ' + msg.replace('\n', ''));
         } else {
-          // redirect but not meat redirect found
+          // Redirect but not meat redirect found
           console.log('[EROR]: No meta redirect found');
         }
       }
@@ -55,25 +55,25 @@ class Jpcrawler {
       callback(error, response, body);
     });
   }
-  
+
   getLoginFormData(something) {
-    // here
+    // Here
   }
-  
+
   login(loginPage, loginData, response, callback) {
-    
-    // move this to getLoginFormData
-    
+
+    // Move this to getLoginFormData
+
     var cookies = response.headers['set-cookie'];
     var cookieStr = '';
     var _this = this;
-  
-    for(var i = 0; i < cookies.length; i++) {
+
+    for (var i = 0; i < cookies.length; i++) {
       cookieStr += cookies[i].split(';')[0];
     }
-    
+
     cookieJar.setCookie(cookieStr, '.japanesepod101.com');
-    
+
     request.post({
       followAllRedirects: true,
       form: loginData,
@@ -84,7 +84,7 @@ class Jpcrawler {
       url: loginPage,
     }, function(error, response, body) {
       _this.followMetaRedirect(error, response, body, callback);
-    }); 
+    });
   }
 };
 
