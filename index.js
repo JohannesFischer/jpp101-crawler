@@ -37,11 +37,12 @@ prompt.multi([
 
     console.log('[LOG]: Logging in as ' + input.username);
 
-    crawler.login(loginPage, loginData, response, function() {
+    crawler.login(loginData, response, function() {
       crawler.getPage(lessonPage, function(error, response, body) {
         // Put available categories
         var $ = cheerio.load(body);
         var levels = $('a.ill-level-title');
+
         if (levels.length > 0) {
           console.log('Levels available:');
           for (var i = 0; i < levels.length; i++) {
@@ -49,6 +50,29 @@ prompt.multi([
           }
           prompt('Select a level: ', (input) => {
             console.log('[LOG]: You picked ' + input);
+
+            var level = levels[input - 1];
+
+            var children = $(level).parent().find('div a');
+
+            console.log('Select a category to download:');
+            var cnt = 1;
+            var options = [];
+
+            for (var i = 0; i < children.length; i++) {
+              console.log('  [' + cnt + '] ' + $(children[i]).text());
+              options.push(i);
+              cnt += 1;
+            }
+
+            console.log('  [TODO]: Select "X" to go to the level selection');
+
+            prompt('Pick a category: ', (input) => {
+              console.log('You picked: ' + input);
+              var href = $(children[options[input - 1]]).attr('href');
+
+              var links = crawler.getEpisodeLinks(href);
+            });
           });
         }
       });
@@ -56,29 +80,7 @@ prompt.multi([
   });
 });
 
+
+// Move this to jpcrawler.js
+
 var downloadList = [];
-
-var getEpisodeLinks = function(linkList, num) {
-  getPage(linkList[num], function(error, response, body) {
-    console.log('Grabbing episode page: ' + linkList[num]);
-    var $ = cheerio.load(body);
-    var downloadLink = $('a.media-download');
-    if (downloadLink !== undefined) {
-      for (var i = 0; i < downloadLink.length; i++) {
-        var attribs = downloadLink[i].attribs;
-
-        if (attribs.class.indexOf('locked') === -1) {
-          var target = downloadLink[i].attribs.href;
-          console.log('Lesson MP3 found: ', target);
-          downloadList.push(target);
-        }
-      }
-
-      if (num < linkList.length) {
-        getEpisodeLinks(linkList, num + 1);
-      } else {
-        console.log('Finished grabbing links');
-      }
-    }
-  });
-}
