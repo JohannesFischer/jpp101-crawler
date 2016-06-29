@@ -1,14 +1,13 @@
-var async = require('async');
+'use strict';
+
 var cheerio = require('cheerio');
-var request = require('request');
-var cookieJar = request.jar();
 var prompt = require('cli-prompt');
 var Jpcrawler = require('./jpcrawler.js');
 var crawler = new Jpcrawler();
 
 var host = 'http://www.japanesepod101.com';
 var loginPage = host + '/member/login_new.php';
-var episodeList = host + '/index.php?cat=1';
+// var episodeList = host + '/index.php?cat=1';
 var lessonPage = host + '/index.php?cat=Introduction';
 
 // Prompt to input username & password
@@ -69,9 +68,9 @@ prompt.multi([
 
             prompt('Pick a category: ', (input) => {
               console.log('You picked: ' + input);
-              var href = $(children[options[input - 1]]).attr('href');
+              // var href = $(children[options[input - 1]]).attr('href');
 
-              var links = crawler.getEpisodeLinks(href);
+              // var links = crawler.getEpisodeLinks(href);
             });
           });
         }
@@ -83,4 +82,4 @@ prompt.multi([
 
 // Move this to jpcrawler.js
 
-var downloadList = [];
+// var downloadList = [];

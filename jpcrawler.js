@@ -1,5 +1,6 @@
 'use strict';
 
+// var async = require('async');
 var cheerio = require('cheerio');
 var request = require('request');
 var cookieJar = request.jar();
@@ -29,7 +30,7 @@ class Jpcrawler {
               callback();
             }
           } else {
-            console.log('[ERROR]: Something went wrong. Redirected to: ' + url);
+            console.log('[ERROR]: Something went wrong. Redirected to: ' + uri);
           }
         });
       } else {
@@ -47,6 +48,11 @@ class Jpcrawler {
 
   getEpisodeLinks(url, callback) {
     // TODO: Log page title
+
+
+    // TODO fetch target pages and loop through
+
+    // Use Async to grab stuff
 
     this.getPage(url, function(error, response, body) {
       console.log('Grabbing episode page: ' + url);
@@ -125,6 +131,6 @@ class Jpcrawler {
       _this.followMetaRedirect(error, response, body, callback);
     });
   }
-};
+}
 
 module.exports = Jpcrawler;
