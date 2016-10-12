@@ -1,30 +1,36 @@
 'use strict';
 
-// var async = require('async');
-var cheerio = require('cheerio');
-var request = require('request');
-var cookieJar = request.jar();
+// const async = require('async');
+const cheerio = require('cheerio');
+const request = require('request');
+const cookieJar = request.jar();
 
 class Jpcrawler {
 
-  constructor() {
-    this.host = 'http://www.japanesepod101.com';
-    this.loginPage = this.host + '/member/login_new.php';
+  constructor(host, loginPage) {
+    this.host = host;
+    this.loginPage = loginPage;
     this.userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) ' +
                      'Gecko/20100101 Firefox/10.0';
   }
 
+  downloadList(links) {
+    for (let i = 0; i < links.length; i++) {
+      this.log('download: ' + links[i]);
+    }
+  }
+
   followMetaRedirect(error, response, body, callback) {
     if (!error && response.statusCode == 200) {
-      var $ = cheerio.load(body);
-      var regex = /<meta http-equiv="Refresh" CONTENT="1; URL=([^"]+)[^>]+>/;
-      var match = regex.exec(response.body);
+      // const $ = cheerio.load(body);
+      const regex = /<meta http-equiv="Refresh" CONTENT="1; URL=([^"]+)[^>]+>/;
+      const match = regex.exec(response.body);
 
       if (match !== null) {
         this.getPage(this.host + match[1], (error, response, body) => {
-          var uri = response.request.uri.href;
-          if (uri === 'http://www.japanesepod101.com/index.php') {
-            console.log('[LOG]: Log in successful!');
+          const uri = response.request.uri.href;
+          if (uri === this.host + '/index.php') {
+            this.log('Log in successful!');
 
             if (callback !== undefined) {
               callback();
@@ -35,41 +41,47 @@ class Jpcrawler {
         });
       } else {
         if (response.request.uri.href === this.loginPage) {
-          var errorBox = $('.error_box div');
-          var msg = errorBox[0].children[0].data || '';
-          console.log('[ERROR]: ' + msg.replace('\n', ''));
+          // const errorBox = $('.error_box div');
+          // const msg = errorBox[0].children[0].data || '';
+          console.log('[ERROR]: Login failed');
         } else {
-          // Redirect but not meat redirect found
-          console.log('[EROR]: No meta redirect found');
+          // Redirect but no meta redirect found
+          console.log('[ERROR]: No meta redirect found');
         }
       }
     }
   }
 
-  getEpisodeLinks(url, callback) {
-    // TODO: Log page title
+  getEpisodeLinks(url) {
+    this.getPage(url, (error, response, body) => {
+      const $ = cheerio.load(body);
+      const epsisodeLinks = $('a.lesson-title');
+      const links = [];
 
+      for (let i = 0; i < epsisodeLinks.length; i++) {
+        links.push(epsisodeLinks[i].attribs.href);
+      }
 
-    // TODO fetch target pages and loop through
+      this.log(`Found ${links.length} episode links`);
+      this.downloadList(links);
+    });
+  }
 
-    // Use Async to grab stuff
-
-    this.getPage(url, function(error, response, body) {
-      console.log('Grabbing episode page: ' + url);
-
-      var $ = cheerio.load(body);
-      var downloadLink = $('a.media-download');
+  getDownloadLink(url, callback) {
+    this.getPage(url, (error, response, body) => {
+      const $ = cheerio.load(body);
+      const downloadLink = $('a.media-download');
 
       if (downloadLink !== undefined) {
-        var links = [];
+        const links = [];
 
-        for (var i = 0; i < downloadLink.length; i++) {
+        for (let i = 0; i < downloadLink.length; i++) {
           // Use hasClass
-          var attribs = downloadLink[i].attribs;
+          const attribs = downloadLink[i].attribs;
 
           if (attribs.class.indexOf('locked') === -1) {
-            var target = downloadLink[i].attribs.href;
-            console.log('Lesson MP3 found: ', target);
+            const target = downloadLink[i].attribs.href;
+            this.log('Lesson MP3 found: ', target);
             links.push(target);
             // DownloadList.push(target);
           }
@@ -91,6 +103,7 @@ class Jpcrawler {
   }
 
   getPage(url, callback) {
+    this.log(`Opening page: ${url}`);
     request.get({
       headers: {
         'User-Agent': this.userAgent,
@@ -98,6 +111,10 @@ class Jpcrawler {
       jar: cookieJar,
       url: url,
     }, (error, response, body) => {
+      if (error) {
+        return this.logError(error);
+      }
+
       callback(error, response, body);
     });
   }
@@ -106,14 +123,23 @@ class Jpcrawler {
     // Here
   }
 
+  log(message) {
+    console.log(`[LOG]: ${message}`);
+  }
+
+  logError(error) {
+    console.error('[Error]: An error occured');
+    console.log(error);
+    return false;
+  }
+
   login(loginData, response, callback) {
     // Move this to getLoginFormData
 
-    var cookies = response.headers['set-cookie'];
-    var cookieStr = '';
-    var _this = this;
+    const cookies = response.headers['set-cookie'];
+    let cookieStr = '';
 
-    for (var i = 0; i < cookies.length; i++) {
+    for (let i = 0; i < cookies.length; i++) {
       cookieStr += cookies[i].split(';')[0];
     }
 
@@ -128,7 +154,8 @@ class Jpcrawler {
       jar: cookieJar,
       url: this.loginPage,
     }, (error, response, body) => {
-      _this.followMetaRedirect(error, response, body, callback);
+      if (error) return this.logError(error);
+      this.followMetaRedirect(error, response, body, callback);
     });
   }
 }

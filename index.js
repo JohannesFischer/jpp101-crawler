@@ -1,14 +1,20 @@
 'use strict';
 
-var cheerio = require('cheerio');
-var prompt = require('cli-prompt');
-var Jpcrawler = require('./jpcrawler.js');
-var crawler = new Jpcrawler();
+const cheerio = require('cheerio');
+const prompt = require('cli-prompt');
+const Jpcrawler = require('./jpcrawler.js');
 
-var host = 'http://www.japanesepod101.com';
-var loginPage = host + '/member/login_new.php';
-// var episodeList = host + '/index.php?cat=1';
-var lessonPage = host + '/index.php?cat=Introduction';
+const host = 'http://www.japanesepod101.com';
+const pages = {
+  lessons: `${host}/index.php?cat=Introduction`,
+  login: `${host}/member/login_new.php`
+};
+
+const crawler = new Jpcrawler(host, pages.login);
+
+// const loginPage = host + '/member/login_new.php';
+// const episodeList = host + '/index.php?cat=1';
+// const lessonPage = host + '/index.php?cat=Introduction';
 
 // Prompt to input username & password
 prompt.multi([
@@ -21,44 +27,43 @@ prompt.multi([
     key: 'password',
     type: 'password',
   },
-], function(input) {
-  crawler.getPage(loginPage, function(error, response, body) {
-    var $ = cheerio.load(body);
+], (input) => {
+  crawler.getPage(pages.login, (error, response, body) => {
+    const $ = cheerio.load(body);
     $('input[name=amember_login]').val(input.username);
     $('input[name=amember_pass]').val(input.password);
-    var formData = $('form[name=login]').serializeArray();
+    const formData = $('form[name=login]').serializeArray();
     formData[3].value = formData[3].value.replace(' ', '+');
 
-    var loginData = {};
-    formData.forEach(function(el) {
+    const loginData = {};
+    formData.forEach((el) => {
       loginData[el.name] = el.value;
     });
 
-    console.log('[LOG]: Logging in as ' + input.username);
+    crawler.log(`Logging in as ${input.username}`);
 
-    crawler.login(loginData, response, function() {
-      crawler.getPage(lessonPage, function(error, response, body) {
+    crawler.login(loginData, response, () => {
+      crawler.getPage(pages.lessons, (error, response, body) => {
         // Put available categories
-        var $ = cheerio.load(body);
-        var levels = $('a.ill-level-title');
+        const $ = cheerio.load(body);
+        const levels = $('a.ill-level-title');
 
         if (levels.length > 0) {
           console.log('Levels available:');
-          for (var i = 0; i < levels.length; i++) {
+          for (let i = 0; i < levels.length; i++) {
             console.log(`  [${i + 1}] ${levels[i].children[0].data}`);
           }
           prompt('Select a level: ', (input) => {
-            console.log('[LOG]: You picked ' + input);
+            crawler.log(`You picked ${input}`);
 
-            var level = levels[input - 1];
-
-            var children = $(level).parent().find('div a');
+            const level = levels[input - 1];
+            const children = $(level).parent().find('div a');
 
             console.log('Select a category to download:');
-            var cnt = 1;
-            var options = [];
+            let cnt = 1;
+            const options = [];
 
-            for (var i = 0; i < children.length; i++) {
+            for (let i = 0; i < children.length; i++) {
               console.log('  [' + cnt + '] ' + $(children[i]).text());
               options.push(i);
               cnt += 1;
@@ -67,10 +72,19 @@ prompt.multi([
             console.log('  [TODO]: Select "X" to go to the level selection');
 
             prompt('Pick a category: ', (input) => {
-              console.log('You picked: ' + input);
-              // var href = $(children[options[input - 1]]).attr('href');
+              if (input.toLowerCase() === 'x') {
+                crawler.log('Return to level selection');
+                return false;
+              }
 
-              // var links = crawler.getEpisodeLinks(href);
+              const index = parseInt(input) - 1;
+              const title = $(children[index]).text();
+              console.log('You picked: ' + input);
+              console.log(title);
+              console.log('-'.repeat(title.length));
+              const href = $(children[options[index]]).attr('href');
+
+              crawler.getEpisodeLinks(href);
             });
           });
         }
@@ -78,8 +92,3 @@ prompt.multi([
     });
   });
 });
-
-
-// Move this to jpcrawler.js
-
-// var downloadList = [];
