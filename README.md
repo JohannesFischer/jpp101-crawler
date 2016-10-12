@@ -1,3 +1,3 @@
-# nut_crawler
-TODO find a new name
+# jpp crawler
 
+Crawls and downloads (in progress) episode from JP101

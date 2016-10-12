@@ -22,7 +22,6 @@ class Jpcrawler {
 
   followMetaRedirect(error, response, body, callback) {
     if (!error && response.statusCode == 200) {
-      // const $ = cheerio.load(body);
       const regex = /<meta http-equiv="Refresh" CONTENT="1; URL=([^"]+)[^>]+>/;
       const match = regex.exec(response.body);
 
