@@ -5,6 +5,8 @@ const cheerio = require('cheerio');
 const request = require('request');
 const cookieJar = request.jar();
 
+// TODO: add --debug-mode param check
+
 class Jpcrawler {
 
   constructor(host, loginPage) {
@@ -26,7 +28,7 @@ class Jpcrawler {
       const match = regex.exec(response.body);
 
       if (match !== null) {
-        this.getPage(this.host + match[1], (error, response, body) => {
+        this.getPage(this.host + match[1], (error, response) => {
           const uri = response.request.uri.href;
           if (uri === this.host + '/index.php') {
             this.log('Log in successful!');
@@ -48,6 +50,8 @@ class Jpcrawler {
           console.log('[ERROR]: No meta redirect found');
         }
       }
+    } else {
+      return this.logError(error);
     }
   }
 
@@ -118,7 +122,7 @@ class Jpcrawler {
     });
   }
 
-  getLoginFormData(something) {
+  getLoginFormData() {
     // Here
   }
 
